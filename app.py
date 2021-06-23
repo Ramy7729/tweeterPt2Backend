@@ -103,6 +103,22 @@ def api_update_user():
     users_json = json.dumps(users[0], default=str)
     return Response(users_json, mimetype="application/json", status=200)
 
+@app.delete("/api/users")
+def api_delete_user():
+    try:
+        password = request.json['password']
+        login_token = request.json['loginToken']
+    except:
+        traceback.print_exc()
+        print("DO BETTER ERROR CATCHING")
+        return Response("Data Error", mimetype="text/plain", status=400)
+    
+    user_rows = dbhelpers.run_delete_statement(
+        "DELETE u, us from `user` u INNER JOIN user_session us ON us.user_id = u.id WHERE u.password=? AND us.token=?", [password, login_token])
+    if(user_rows < 2):
+        return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
+    return Response("User Deleted", mimetype="text/plain", status=200)
+
 @app.post("/api/login")
 def api_post_login():
     try:  
