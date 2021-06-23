@@ -147,6 +147,19 @@ def api_post_login():
     login_json = json.dumps(users[0], default=str)
     return Response(login_json, mimetype="application/json", status=201)
 
+@app.delete("/api/login")
+def api_delete_login():
+    try:
+        login_token = request.json['loginToken']
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    user_rows = dbhelpers.run_delete_statement(
+        "DELETE us FROM user_session us WHERE us.token=?", [login_token])
+    if(user_rows != 1):
+        return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
+    return Response("User logged out", mimetype="text/plain", status=200)
+
 def get_users(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
