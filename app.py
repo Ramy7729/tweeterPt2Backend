@@ -160,6 +160,20 @@ def api_delete_login():
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
     return Response("User logged out", mimetype="text/plain", status=200)
 
+@app.get("/api/follows")
+def api_get_follows():
+    try:
+        user_id = int(request.args["userId"])
+    except KeyError:
+        return Response("Please ensure a userId is sent", mimetype="text/plain", status=400)
+    except ValueError:
+        return Response("userID must be a number", mimetype="text/plain", status=400)
+    
+    users = get_users("SELECT follow_id, email, username, bio, birthdate, image_url, banner_url FROM user u INNER JOIN follow f ON f.follow_id = u.id WHERE f.user_id=?", [user_id])
+    
+    users_json = json.dumps(users, default=str) 
+    return Response(users_json, mimetype="application/json", status=200)
+
 def get_users(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
