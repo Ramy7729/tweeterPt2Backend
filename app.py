@@ -8,6 +8,58 @@ import dbconnect
 
 app = Flask(__name__)
 
+@app.post("/api/users")
+def create_user():
+    try:
+        email = request.json['email']
+        username = request.json['username']
+        password = request.json['password']
+        bio = request.json['bio']
+        birthdate = request.json['birthdate']
+        image_url = request.json.get('imageUrl', None)
+        banner_url = request.json.get('bannerUrl', None)
+    except:
+        return Response("Please ensure all required fields are entered", mimetype="text/plain", status=400)
+    
+    if (image_url != None):
+        if (banner_url != None):
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, image_url, banner_url) VALUES (?,?,?,?,?,?,?)",
+                                                [username, email, password, bio, birthdate, image_url, banner_url])
+        else:
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, image_url) VALUES (?,?,?,?,?,?)",
+                                                [username, email, password, bio, birthdate, image_url])
+    else:
+        if (banner_url != None):
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, banner_url) VALUES (?,?,?,?,?,?)",
+                                                    [username, email, password, bio, birthdate, banner_url])
+        else:    
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate) VALUES (?,?,?,?,?)",
+                                                        [username, email, password, bio, birthdate])
+    
+    if (new_user_id == None):
+        return Response("User already exists", mimetype="text/plain", status=409)
+
+    created_user = dbhelpers.run_select_statement("SELECT id FROM `user` WHERE username=? AND password=?", [username, password])
+    if(len(created_user) == 1):
+        token = secrets.token_urlsafe(70)
+        user_token = dbhelpers.run_insert_statement("INSERT INTO user_session(token, user_id) VALUES(?,?)", [token, created_user[0][0]])
+    
+    if(user_token != None):
+        user_dictionary = {
+            "userId": new_user_id, 
+            "username": username, 
+            "email": email, 
+            "bio": bio, 
+            "birthdate": birthdate, 
+            "imageUrl": image_url, 
+            "bannerUrl": banner_url, 
+            "loginToken": token
+        }
+        user_json = json.dumps(user_dictionary, default=str)
+        return Response(user_json, mimetype="application/json", status=201)
+    
+    else: return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
+
 @app.get("/api/users")
 def get_users():
     try:
