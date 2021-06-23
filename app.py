@@ -39,26 +39,20 @@ def api_create_user():
     if (new_user_id == None):
         return Response("User already exists", mimetype="text/plain", status=409)
 
-    created_user = dbhelpers.run_select_statement("SELECT id FROM `user` WHERE username=? AND password=?", [username, password])
-    if(len(created_user) == 1):
-        token = secrets.token_urlsafe(70)
-        user_token = dbhelpers.run_insert_statement("INSERT INTO user_session(token, user_id) VALUES(?,?)", [token, created_user[0][0]])
+    users = get_users("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM `user` WHERE username=? AND password=?", [username, password])
     
+    if(len(users) != 1):
+        return Response("Can't fetch created user", mimetype="text/plain", status=500)
+
+    token = secrets.token_urlsafe(70)
+    user_token = dbhelpers.run_insert_statement("INSERT INTO user_session(token, user_id) VALUES(?,?)", [token, users[0]["userId"]])
+
     if(user_token != None):
-        user_dictionary = {
-            "userId": new_user_id, 
-            "username": username, 
-            "email": email, 
-            "bio": bio, 
-            "birthdate": birthdate, 
-            "imageUrl": image_url, 
-            "bannerUrl": banner_url, 
-            "loginToken": token
-        }
-        user_json = json.dumps(user_dictionary, default=str)
+        users[0]["loginToken"] = token 
+        user_json = json.dumps(users[0], default=str)
         return Response(user_json, mimetype="application/json", status=201)
     
-    else: return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
+    return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
 
 @app.get("/api/users")
 def api_get_users():
@@ -76,6 +70,37 @@ def api_get_users():
         return Response("Failed to GET users.", mimetype="text/plain", status=500)
 
     users_json = json.dumps(users, default=str)
+    return Response(users_json, mimetype="application/json", status=200)
+
+@app.patch("/api/users")
+def api_update_user():
+    try:
+        username = request.json['username']
+        email = (request.json['email'])
+        bio = request.json['bio']
+        birthdate = (request.json['birthdate'])
+        image_url = (request.json['imageUrl'])
+        banner_url = (request.json['bannerUrl'])
+        login_token = (request.json['loginToken'])
+     
+    except:
+        print("Data error")
+        return Response("Data error", mimetype="text/plain", status=400)
+    
+    try:
+        number_of_users_updated = dbhelpers.run_update_statement("UPDATE `user` u INNER JOIN `user_session` us ON us.user_id = u.id SET username =?, email =?, bio =?, birthdate =?, image_url =?, banner_url =? WHERE us.token = ?", 
+                                                        [username, email, bio, birthdate, image_url, banner_url, login_token])
+        if (number_of_users_updated != 1):
+            return Response("Unauthorized.", mimetype="text/plain", status=403)
+        users = get_users("SELECT u.id, u.email, u.username, u.bio, u.birthdate, u.image_url, u.banner_url FROM user u inner join user_session us on us.user_id = u.id WHERE us.token = ?", [login_token,])
+        
+    except:
+        return Response("Error in running db query", mimetype="text/plain", status=400)
+    
+    if (users == None):
+        return Response("Failed to GET user.", mimetype="text/plain", status=500)
+    
+    users_json = json.dumps(users[0], default=str)
     return Response(users_json, mimetype="application/json", status=200)
 
 @app.post("/api/login")
@@ -97,21 +122,13 @@ def api_post_login():
     user_token = dbhelpers.run_insert_statement("INSERT INTO user_session(token, user_id) VALUES(?,?)", [token, user[0][0]])
     if (user_token == None):
         return Response("Could not create loginToken", mimetype="plain/text", status=500)
-    users_properties = dbhelpers.run_select_statement("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM `user` WHERE username=? AND password=?", 
-                                                        [username, password])
-    if (len(users_properties) != 1):
+
+    users = get_users("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM `user` WHERE username=? AND password=?", [username, password])
+
+    if (len(users) != 1):
         return Response("Duplicate user found", mimetype="plain/text", status=500)
-    logged_in_user = {
-        "userId": users_properties[0][0],
-        "email": users_properties[0][1],
-        "username": users_properties[0][2],
-        "bio": users_properties[0][3],
-        "birthdate": users_properties[0][4],
-        "imageUrl": users_properties[0][5],
-        "bannerUrl": users_properties[0][6],
-        "loginToken": token,
-    }
-    login_json = json.dumps(logged_in_user, default=str)
+    users[0]["loginToken"] = token
+    login_json = json.dumps(users[0], default=str)
     return Response(login_json, mimetype="application/json", status=201)
 
 def get_users(sql_statement, sql_params):
