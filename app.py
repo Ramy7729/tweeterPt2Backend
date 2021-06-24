@@ -117,7 +117,7 @@ def api_delete_user():
         "DELETE u, us from `user` u INNER JOIN user_session us ON us.user_id = u.id WHERE u.password=? AND us.token=?", [password, login_token])
     if(user_rows < 2):
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
-    return Response("User Deleted", mimetype="text/plain", status=200)
+    return Response("User Deleted", mimetype="text/plain", status=204)
 
 @app.post("/api/login")
 def api_post_login():
@@ -158,12 +158,13 @@ def api_delete_login():
         "DELETE us FROM user_session us WHERE us.token=?", [login_token])
     if(user_rows != 1):
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
-    return Response("User logged out", mimetype="text/plain", status=200)
+    return Response("User logged out", mimetype="text/plain", status=204)
 
 @app.get("/api/follows")
 def api_get_follows():
     try:
         user_id = int(request.args["userId"])
+        users = None
     except KeyError:
         return Response("Please ensure a userId is sent", mimetype="text/plain", status=400)
     except ValueError:
