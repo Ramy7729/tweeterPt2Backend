@@ -198,6 +198,19 @@ def api_post_follows():
         return Response("User already followed.", mimetype="plain/text", status=500)
     return Response("", mimetype="text/plain", status=204)
 
+@app.delete("/api/follows")
+def api_delete_follows():
+    try:
+        login_token = request.json['loginToken']
+        user_id = request.json['followId']
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    dbhelpers.run_delete_statement(
+        "DELETE f from follow f INNER JOIN user_session us ON us.user_id = f.user_id where f.follow_id=? AND us.token=?", [user_id, login_token])
+    
+    return Response("", mimetype="text/plain", status=204)
+
 def get_users(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
