@@ -230,6 +230,24 @@ def api_get_followers():
     users_json = json.dumps(users, default=str) 
     return Response(users_json, mimetype="application/json", status=200)
 
+@app.get("/api/tweets")
+def api_get_tweets():
+    try:
+        user_id = int(request.args.get("userId", -1))
+    except ValueError:
+        return Response("userID must be a number.", mimetype="text/plain", status=400)
+    
+    if (user_id == -1):
+        tweets = get_tweets("SELECT t.id, t.user_id, u.username, t.content, t.created_at, u.image_url, t.image_url FROM user u INNER JOIN tweet t ON t.user_id = u.id", [])
+    else:
+        tweets = get_tweets("SELECT t.id, t.user_id, u.username, t.content, t.created_at, u.image_url, t.image_url FROM user u INNER JOIN tweet t ON t.user_id = u.id WHERE t.user_id=?", [user_id])
+    
+    if (tweets == None):
+        return Response("Failed to GET tweets.", mimetype="text/plain", status=500)
+
+    tweets_json = json.dumps(tweets, default=str)
+    return Response(tweets_json, mimetype="application/json", status=200)
+
 def get_users(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
@@ -248,5 +266,25 @@ def get_users(sql_statement, sql_params):
         }
         users.append(user)
     return users
+
+def get_tweets(sql_statement, sql_params):
+    users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
+    
+    if (users_properties == None):
+        return None
+    users = []
+    for user_properties in users_properties:
+        user = {
+            "tweetId": user_properties[0],
+            "userID": user_properties[1],
+            "username": user_properties[2],
+            "content": user_properties[3],
+            "createdAt": user_properties[4],
+            "userImageUrl": user_properties[5],
+            "tweetImageUrl":user_properties[6],
+        }
+        users.append(user)
+    return users    
+
 
 app.run(debug=True)
