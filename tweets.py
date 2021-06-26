@@ -48,6 +48,31 @@ def api_post_tweets():
     tweets_json = json.dumps(tweets[0], default=str) 
     return Response(tweets_json, mimetype="application/json", status=201)
 
+@app.patch("/api/tweets")
+def api_patch_tweet():
+    try:
+        login_token = request.json['loginToken']
+        tweet_id = int(request.json['tweetId'])
+        content = request.json['content']
+    except ValueError:
+        return Response("tweetId must be a number", mimetype="text/plain", status=400)
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    if (len(content) > 377):
+        return Response("Content too long", mimetype="text/plain", status=400)
+    
+    number_of_tweets_updated = dbhelpers.run_update_statement("UPDATE tweet t INNER JOIN `user_session` us ON us.user_id = t.user_id SET content =? WHERE us.token = ? and t.id = ?", 
+                                                    [content, login_token, tweet_id])
+    if (number_of_tweets_updated != 1):
+        return Response("Unable to update tweet.", mimetype="text/plain", status=403)
+    tweet = {
+        "tweetId": tweet_id,
+        "content": content
+    }
+    tweet_json = json.dumps(tweet, default=str)
+    return Response(tweet_json, mimetype="application/json", status=200)
+
 def get_tweets(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
