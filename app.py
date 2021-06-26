@@ -117,7 +117,7 @@ def api_delete_user():
         "DELETE u, us from `user` u INNER JOIN user_session us ON us.user_id = u.id WHERE u.password=? AND us.token=?", [password, login_token])
     if(user_rows < 2):
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
-    return Response("User Deleted", mimetype="text/plain", status=204)
+    return Response("", mimetype="text/plain", status=204)
 
 @app.post("/api/login")
 def api_post_login():
@@ -247,6 +247,33 @@ def api_get_tweets():
 
     tweets_json = json.dumps(tweets, default=str)
     return Response(tweets_json, mimetype="application/json", status=200)
+
+@app.post("/api/tweets")
+def api_post_tweets():
+    try: 
+        login_token = request.json['loginToken']
+        content = request.json['content']
+        image_url = request.json.get('imageUrl')
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    if (len(content) > 377):
+        return Response("Content too long", mimetype="text/plain", status=400)
+
+    if (image_url == None):
+        user_tweet_id = dbhelpers.run_insert_statement("INSERT INTO tweet(content, user_id) SELECT ?, user_id FROM user_session us WHERE us.token =?", [content, login_token])
+    else:
+        user_tweet_id = dbhelpers.run_insert_statement("INSERT INTO tweet(content, image_url, user_id) SELECT ?, ?, user_id FROM user_session us WHERE us.token =?", [content, image_url, login_token])
+    if (user_tweet_id == None):
+        return Response("Invalid login token", mimetype="text/plain", status=400)
+        
+    tweets = get_tweets("SELECT t.id, t.user_id, u.username, t.content, t.created_at, u.image_url user_image_url, t.image_url FROM tweet t INNER JOIN user_session us on us.user_id = t.user_id INNER JOIN `user` u on u.id = t.user_id where us.token =? AND t.id =?", [login_token, user_tweet_id])
+
+    if (tweets == None or len(tweets) != 1):
+        return Response("Error fetching tweet", mimetype="text/plain", status=500)
+
+    tweets_json = json.dumps(tweets[0], default=str) 
+    return Response(tweets_json, mimetype="application/json", status=201)
 
 def get_users(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
