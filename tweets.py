@@ -73,6 +73,22 @@ def api_patch_tweet():
     tweet_json = json.dumps(tweet, default=str)
     return Response(tweet_json, mimetype="application/json", status=200)
 
+@app.delete("/api/tweets")
+def api_delete_tweets():
+    try:
+        login_token = request.json['loginToken']
+        tweet_id = int(request.json['tweetId'])
+    except ValueError:
+        return Response("tweetId must be a number", mimetype="text/plain", status=400)
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    number_of_tweets_deleted = dbhelpers.run_delete_statement(
+        "DELETE t from tweet t INNER JOIN user_session us ON us.user_id = t.user_id where t.id=? AND us.token=?", [tweet_id, login_token])
+    if (number_of_tweets_deleted != 1):
+        return Response("Could not delete tweet", mimetype="text/plain", status=400)
+    return Response("", mimetype="text/plain", status=204)
+
 def get_tweets(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
