@@ -8,24 +8,24 @@ from users import get_users
 @app.post("/api/login")
 def api_post_login():
     try:  
-        username = request.json['username']
+        email = request.json['email']
         password = request.json['password']
     except KeyError:
-        return Response("Please enter both username and password", mimetype="plain/text", status=400)
+        return Response("Please enter both email and password", mimetype="plain/text", status=400)
     
-    if(username == "" or password == ""):
-        return Response("Please enter a username or password", mimetype="plain/text", status=400)
+    if(email == "" or password == ""):
+        return Response("Please enter a email or password", mimetype="plain/text", status=400)
    
-    user = dbhelpers.run_select_statement("SELECT id FROM `user` WHERE username=? AND password=?", [username, password])
+    user = dbhelpers.run_select_statement("SELECT id FROM `user` WHERE email=? AND password=?", [email, password])
     if (len(user) != 1):
-        return Response("Invalid username or password", mimetype="plain/text", status=401)
+        return Response("Invalid email or password", mimetype="plain/text", status=401)
 
     token = secrets.token_urlsafe(70)
     user_token = dbhelpers.run_insert_statement("INSERT INTO user_session(token, user_id) VALUES(?,?)", [token, user[0][0]])
     if (user_token == None):
         return Response("Could not create loginToken", mimetype="plain/text", status=500)
 
-    users = get_users("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM `user` WHERE username=? AND password=?", [username, password])
+    users = get_users("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM `user` WHERE email=? AND password=?", [email, password])
 
     if (len(users) != 1):
         return Response("Duplicate user found", mimetype="plain/text", status=500)
