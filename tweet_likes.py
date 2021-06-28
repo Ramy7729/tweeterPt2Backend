@@ -58,3 +58,18 @@ def api_post_tweet_likes():
             return Response("Tweet already liked", mimetype="plain/text", status=409)
         return Response("Could not like the tweet.", mimetype="plain/text", status=500)
     return Response("", mimetype="text/plain", status=201)
+
+@app.delete("/api/tweet-likes")
+def api_delete_tweet_likes():
+    try:
+        login_token = request.json['loginToken']
+        tweet_id = int(request.json['tweetId'])
+    except ValueError:
+        return Response("tweetId must be a number", mimetype="text/plain", status=400)
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    number_of_tweet_likes_deleted = dbhelpers.run_delete_statement("DELETE tl FROM tweet_like tl INNER JOIN user_session us ON us.user_id = tl.user_id where tl.tweet_id = ? AND us.token = ?", [tweet_id, login_token])
+    if (number_of_tweet_likes_deleted != 1):
+        return Response("Could not delete tweet like", mimetype="text/plain", status=400)
+    return Response("", mimetype="text/plain", status=204)
