@@ -81,6 +81,21 @@ def api_patch_comment():
     comments_json = json.dumps(updated_comment[0], default=str) 
     return Response(comments_json, mimetype="application/json", status=200)
 
+@app.delete("/api/comments")
+def api_delete_comments():
+    try:
+        login_token = request.json['loginToken']
+        comment_id = int(request.json['commentId'])
+    except ValueError:
+        return Response("tweetId must be a number", mimetype="text/plain", status=400)
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    number_of_comments_deleted = dbhelpers.run_delete_statement("DELETE c from comment c INNER JOIN user_session us ON us.user_id = c.user_id WHERE c.id=? AND us.token=?", [comment_id, login_token])
+    if (number_of_comments_deleted != 1):
+        return Response("Could not delete comment", mimetype="text/plain", status=400)
+    return Response("", mimetype="text/plain", status=204)
+
 def get_comments(sql_statement, sql_params):
     comments_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
