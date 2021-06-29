@@ -67,3 +67,19 @@ def api_post_comment_likes():
     }
     comments_likes_json = json.dumps(comments_likes_dictionary, default=str)
     return Response(comments_likes_json, mimetype="application/json", status=201)
+
+@app.delete("/api/comment-likes")
+def api_delete_comment_likes():
+    try:
+        login_token = request.json['loginToken']
+        comment_id = int(request.json['commentId'])
+    except ValueError:
+        return Response("tweetId must be a number", mimetype="text/plain", status=400)
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    number_of_comment_likes_deleted = dbhelpers.run_delete_statement("DELETE cl FROM comment_like cl INNER JOIN user_session us ON us.user_id = cl.user_id where cl.comment_id = ? AND us.token = ?", [comment_id, login_token])
+    if (number_of_comment_likes_deleted != 1):
+        return Response("Could not delete comment like", mimetype="text/plain", status=400)
+    return Response("", mimetype="text/plain", status=204)
+    
