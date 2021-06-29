@@ -54,6 +54,33 @@ def api_post_comments():
     comments_json = json.dumps(comments[0], default=str) 
     return Response(comments_json, mimetype="application/json", status=201)
 
+@app.patch("/api/comments")
+def api_patch_comment():
+    try:
+        login_token = request.json['loginToken']
+        comment_id = int(request.json['commentId'])
+        content = request.json['content']
+    except ValueError:
+        return Response("commentId must be a number", mimetype="text/plain", status=400)
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    if (len(content) > 377):
+        return Response("Content too long", mimetype="text/plain", status=400)
+    
+    updated_comment_rows = dbhelpers.run_update_statement("UPDATE comment c INNER JOIN `user_session` us ON us.user_id = c.user_id SET c.content =? WHERE us.token =? and c.id =?", [content, login_token, comment_id]) 
+                                                    
+    if (updated_comment_rows != 1):
+        return Response("Unable to update comment.", mimetype="text/plain", status=403)
+
+    updated_comment = get_comments("SELECT c.id, c.tweet_id, c.user_id, u.username, c.content, c.created_at FROM comment c INNER JOIN `user` u ON c.user_id = u.id INNER JOIN user_session us ON us.user_id = u.id WHERE c.id =? AND us.token =?", [comment_id, login_token])
+
+    if (updated_comment == None):
+        return Response("Failed to update comment.", mimetype="text/plain", status=500)
+
+    comments_json = json.dumps(updated_comment[0], default=str) 
+    return Response(comments_json, mimetype="application/json", status=200)
+
 def get_comments(sql_statement, sql_params):
     comments_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
