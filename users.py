@@ -76,35 +76,69 @@ def api_get_users():
     users_json = json.dumps(users, default=str)
     return Response(users_json, mimetype="application/json", status=200)
 
-
 @app.patch("/api/users")
 def api_update_user():
     try:
-        username = request.json['username']
-        email = (request.json['email'])
-        bio = request.json['bio']
-        birthdate = (request.json['birthdate'])
-        image_url = (request.json['imageUrl'])
-        banner_url = (request.json['bannerUrl'])
-        login_token = (request.json['loginToken'])
-     
-    except:
-        print("Data error")
-        return Response("Data error", mimetype="text/plain", status=400)
-    
+        login_token = request.json['loginToken']
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+
+    users = get_users("SELECT u.id, u.email, u.username, u.bio, u.birthdate, u.image_url, u.banner_url FROM user u inner join user_session us on us.user_id = u.id WHERE us.token = ?", [login_token,])
+    if (users == None or len(users) != 1):
+        return Response("Could not find user.", mimetype="text/plain", status=404)
+
+    optional_params = {
+        "username": request.json.get('username'),
+        "email": request.json.get('email'),
+        "bio": request.json.get('bio'),
+        "birthdate": request.json.get('birthdate'),
+        "image_url": request.json.get('imageUrl'),
+        "banner_url": request.json.get('bannerUrl'),
+    }
+
+    if (optional_params['email'] == "" or optional_params['username'] == ""):
+        return Response("Email and username can not be empty", mimetype="text/plain", status=400)
+
+    users[0]['image_url'] = users[0]['imageUrl']
+    users[0]['banner_url'] = users[0]['bannerUrl']
+
+    new_optional_params = {}
+    for key, value in optional_params.items():
+        if (key == 'birthdate'):
+            if (users[0][key].isoformat() != optional_params[key]):
+                new_optional_params[key] = value
+        elif (users[0][key] != optional_params[key]):
+            new_optional_params[key] = value
+
+    if (len(new_optional_params.keys()) == 0):
+        del users[0]['image_url']
+        del users[0]['banner_url']
+        users_json = json.dumps(users[0], default=str)
+        return Response(users_json, mimetype="application/json", status=200)
+
     try:
-        number_of_users_updated = dbhelpers.run_update_statement("UPDATE `user` u INNER JOIN `user_session` us ON us.user_id = u.id SET username =?, email =?, bio =?, birthdate =?, image_url =?, banner_url =? WHERE us.token = ?", 
-                                                        [username, email, bio, birthdate, image_url, banner_url, login_token])
+        sql_query_set_list = []
+        set_params = []
+        for param, value in new_optional_params.items():
+            if (value != None):
+                sql_query_set_list.append(f"{param}=?")
+                set_params.append(value)
+
+        sql_query_set = ', '.join(sql_query_set_list)
+        set_params.append(login_token)
+        
+        number_of_users_updated = dbhelpers.run_update_statement(
+            f"UPDATE `user` u INNER JOIN `user_session` us ON us.user_id = u.id SET {sql_query_set} WHERE us.token = ?", set_params)
         if (number_of_users_updated != 1):
             return Response("Unauthorized.", mimetype="text/plain", status=403)
         users = get_users("SELECT u.id, u.email, u.username, u.bio, u.birthdate, u.image_url, u.banner_url FROM user u inner join user_session us on us.user_id = u.id WHERE us.token = ?", [login_token,])
-        
+
     except:
         return Response("Error in running db query", mimetype="text/plain", status=400)
-    
+
     if (users == None):
         return Response("Failed to GET user.", mimetype="text/plain", status=500)
-    
+
     users_json = json.dumps(users[0], default=str)
     return Response(users_json, mimetype="application/json", status=200)
 
