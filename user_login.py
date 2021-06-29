@@ -1,9 +1,10 @@
 from flask import request, Response
 from application import app
+from users import get_users
 import dbhelpers
 import json
 import secrets
-from users import get_users
+import hashlib
 
 @app.post("/api/login")
 def api_post_login():
@@ -12,6 +13,10 @@ def api_post_login():
         password = request.json['password']
     except KeyError:
         return Response("Please enter both email and password", mimetype="plain/text", status=400)
+    
+    salt = get_salt_from_db(email)
+    password = salt + password
+    password = hashlib.sha512(password.encode()).hexdigest()
     
     if(email == "" or password == ""):
         return Response("Please enter a email or password", mimetype="plain/text", status=400)
@@ -45,3 +50,9 @@ def api_delete_login():
     if(user_rows != 1):
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
     return Response("User logged out", mimetype="text/plain", status=204)
+
+def get_salt_from_db(email):
+    user = dbhelpers.run_select_statement("SELECT salt FROM `user` where email=?", [email,])
+    if(len(user) == 1 ):
+        return user[0][0]
+    return ''
