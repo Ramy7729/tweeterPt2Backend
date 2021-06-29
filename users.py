@@ -4,6 +4,9 @@ import dbhelpers
 import json
 import traceback
 import secrets
+import string 
+import random
+import hashlib
 
 @app.post("/api/users")
 def api_create_user():
@@ -17,21 +20,25 @@ def api_create_user():
         banner_url = request.json.get('bannerUrl', None)
     except:
         return Response("Please ensure all required fields are entered", mimetype="text/plain", status=400)
+
+    salt = create_salt()
+    password = salt + password
+    password = hashlib.sha512(password.encode()).hexdigest()
     
     if (image_url != None):
         if (banner_url != None):
-            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, image_url, banner_url) VALUES (?,?,?,?,?,?,?)",
-                                                [username, email, password, bio, birthdate, image_url, banner_url])
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, image_url, banner_url, salt) VALUES (?,?,?,?,?,?,?,?)",
+                                                [username, email, password, bio, birthdate, image_url, banner_url, salt])
         else:
-            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, image_url) VALUES (?,?,?,?,?,?)",
-                                                [username, email, password, bio, birthdate, image_url])
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, image_url, salt) VALUES (?,?,?,?,?,?,?)",
+                                                [username, email, password, bio, birthdate, image_url, salt])
     else:
         if (banner_url != None):
-            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, banner_url) VALUES (?,?,?,?,?,?)",
-                                                    [username, email, password, bio, birthdate, banner_url])
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, banner_url, salt) VALUES (?,?,?,?,?,?,?)",
+                                                    [username, email, password, bio, birthdate, banner_url, salt])
         else:    
-            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate) VALUES (?,?,?,?,?)",
-                                                        [username, email, password, bio, birthdate])
+            new_user_id = dbhelpers.run_insert_statement(f"INSERT INTO user(username, email, password, bio, birthdate, salt) VALUES (?,?,?,?,?,?)",
+                                                        [username, email, password, bio, birthdate, salt])
     
     if (new_user_id == None):
         return Response("User already exists", mimetype="text/plain", status=409)
@@ -135,3 +142,8 @@ def get_users(sql_statement, sql_params):
         }
         users.append(user)
     return users
+
+def create_salt():
+    letters_and_digits = string.ascii_letters + string.digits
+    salt = ''.join(random.choice(letters_and_digits) for i in range(10))
+    return salt
