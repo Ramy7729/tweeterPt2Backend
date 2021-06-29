@@ -26,6 +26,34 @@ def api_get_comments():
     comments_json = json.dumps(comments_info, default=str)
     return Response(comments_json, mimetype="application/json", status=200)
 
+@app.post("/api/comments")
+def api_post_comments():
+    try: 
+        login_token = request.json['loginToken']
+        content = request.json['content']
+        tweet_id = int(request.json['tweetId'])
+    except ValueError:
+        return Response("tweetId must be a number", mimetype="text/plain", status=400)
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    
+    if (len(content) > 377):
+        return Response("Content too long", mimetype="text/plain", status=400)
+
+    
+    user_comment_id = dbhelpers.run_insert_statement("insert into comment(user_id, tweet_id, content) select us.user_id, ?, ? from user_session us where us.token = ?", [tweet_id, content, login_token])
+    
+    if (user_comment_id == None):
+        return Response("Invalid login token", mimetype="text/plain", status=400)
+    
+    comments = get_comments("SELECT c.id, c.tweet_id, c.user_id, u.username, c.content, c.created_at from comment c INNER JOIN user_session us ON us.user_id = c.user_id INNER JOIN `user` u ON c.user_id = u.id where us.token =? AND c.id =?", [login_token, user_comment_id,])
+    
+    if (comments == None or len(comments) != 1):
+        return Response("Error fetching comment", mimetype="text/plain", status=500)
+
+    comments_json = json.dumps(comments[0], default=str) 
+    return Response(comments_json, mimetype="application/json", status=201)
+
 def get_comments(sql_statement, sql_params):
     comments_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
