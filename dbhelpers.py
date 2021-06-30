@@ -1,5 +1,6 @@
 import dbconnect
 import traceback
+import mariadb
 
 def run_select_statement(sql, params):
     conn = dbconnect.get_db_connection()
@@ -9,10 +10,9 @@ def run_select_statement(sql, params):
     try:
         cursor.execute(sql, params)
         result = cursor.fetchall()
-    # TODO Do a better job of catching more specific errors! Might need to find a way to return error-specific results
-    except:
+    except mariadb.Error:
         traceback.print_exc()
-        print("DO BETTER ERROR CATCHING")
+        print("DB Error")
 
     
     dbconnect.close_db_cursor(cursor)
@@ -29,9 +29,9 @@ def run_insert_statement(sql, params):
         cursor.execute(sql, params)
         conn.commit()
         result = cursor.lastrowid
-    except:
+    except mariadb.Error:
         traceback.print_exc()
-        print("DO BETTER ERROR CATCHING")
+        print("DB Error")
 
     dbconnect.close_db_cursor(cursor)
     dbconnect.close_db_connection(conn)
@@ -47,9 +47,9 @@ def run_delete_statement(sql, params):
         cursor.execute(sql, params)
         conn.commit()
         result = cursor.rowcount
-    except:
+    except mariadb.Error:
         traceback.print_exc()
-        print("DO BETTER ERROR CATCHING")
+        print("DB Error")
 
     dbconnect.close_db_cursor(cursor)
     dbconnect.close_db_connection(conn)
@@ -65,9 +65,9 @@ def run_update_statement(sql, params):
         cursor.execute(sql, params)
         conn.commit()
         result = cursor.rowcount
-    except:
+    except mariadb.Error:
         traceback.print_exc()
-        print("DO BETTER ERROR CATCHING")
+        print("DB Error")
 
     dbconnect.close_db_cursor(cursor)
     dbconnect.close_db_connection(conn)
