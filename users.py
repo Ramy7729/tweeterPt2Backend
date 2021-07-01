@@ -8,6 +8,7 @@ import string
 import random
 import hashlib
 
+# Method that creates a user.
 @app.post("/api/users")
 def api_create_user():
     try:
@@ -58,6 +59,7 @@ def api_create_user():
     
     return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
 
+# Method that returns created users.
 @app.get("/api/users")
 def api_get_users():
     try:
@@ -76,6 +78,7 @@ def api_get_users():
     users_json = json.dumps(users, default=str)
     return Response(users_json, mimetype="application/json", status=200)
 
+# Method that let's a user update their profile.
 @app.patch("/api/users")
 def api_update_user():
     try:
@@ -142,6 +145,7 @@ def api_update_user():
     users_json = json.dumps(users[0], default=str)
     return Response(users_json, mimetype="application/json", status=200)
 
+# Method that deletes a user.
 @app.delete("/api/users")
 def api_delete_user():
     try:
@@ -158,6 +162,8 @@ def api_delete_user():
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
     return Response("", mimetype="text/plain", status=204)
 
+# This function returns specified users with the sql select statement.
+# Uses a dictionary for proper key values.
 def get_users(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
@@ -177,6 +183,7 @@ def get_users(sql_statement, sql_params):
         users.append(user)
     return users
 
+# This function creates salt for the user passwords.
 def create_salt():
     letters_and_digits = string.ascii_letters + string.digits
     salt = ''.join(random.choice(letters_and_digits) for i in range(10))

@@ -3,6 +3,7 @@ from application import app
 import dbhelpers
 import json
 
+# Method that returns comments.
 @app.get("/api/comments")
 def api_get_comments():
     try:
@@ -26,6 +27,7 @@ def api_get_comments():
     comments_json = json.dumps(comments_info, default=str)
     return Response(comments_json, mimetype="application/json", status=200)
 
+# Method that posts a comment.
 @app.post("/api/comments")
 def api_post_comments():
     try: 
@@ -54,6 +56,7 @@ def api_post_comments():
     comments_json = json.dumps(comments[0], default=str) 
     return Response(comments_json, mimetype="application/json", status=201)
 
+# Method that patches a comment.
 @app.patch("/api/comments")
 def api_patch_comment():
     try:
@@ -81,6 +84,7 @@ def api_patch_comment():
     comments_json = json.dumps(updated_comment[0], default=str) 
     return Response(comments_json, mimetype="application/json", status=200)
 
+# Method that deletes a comment.
 @app.delete("/api/comments")
 def api_delete_comments():
     try:
@@ -96,6 +100,8 @@ def api_delete_comments():
         return Response("Could not delete comment", mimetype="text/plain", status=400)
     return Response("", mimetype="text/plain", status=204)
 
+# This function returns comments.
+# Using a dictionary to get proper key values.
 def get_comments(sql_statement, sql_params):
     comments_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     

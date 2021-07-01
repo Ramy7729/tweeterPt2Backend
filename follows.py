@@ -4,6 +4,7 @@ import dbhelpers
 import json
 from users import get_users
 
+# Method that returns follows.
 @app.get("/api/follows")
 def api_get_follows():
     try:
@@ -23,6 +24,7 @@ def api_get_follows():
     users_json = json.dumps(users, default=str) 
     return Response(users_json, mimetype="application/json", status=200)
 
+# Method that posts a follow.
 @app.post("/api/follows")
 def api_post_follows():
     try: 
@@ -42,6 +44,7 @@ def api_post_follows():
         return Response("User already followed.", mimetype="plain/text", status=500)
     return Response("", mimetype="text/plain", status=204)
 
+# Method that deletes a follow.
 @app.delete("/api/follows")
 def api_delete_follows():
     try:

@@ -6,6 +6,7 @@ import json
 import secrets
 import hashlib
 
+# Method that logs in a user.
 @app.post("/api/login")
 def api_post_login():
     try:  
@@ -38,6 +39,7 @@ def api_post_login():
     login_json = json.dumps(users[0], default=str)
     return Response(login_json, mimetype="application/json", status=201)
 
+# Method that deletes a login (loginToken).
 @app.delete("/api/login")
 def api_delete_login():
     try:
@@ -51,6 +53,7 @@ def api_delete_login():
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
     return Response("User logged out", mimetype="text/plain", status=204)
 
+# This function is to return salt based on the users email.
 def get_salt_from_db(email):
     user = dbhelpers.run_select_statement("SELECT salt FROM `user` where email=?", [email,])
     if(len(user) == 1 ):

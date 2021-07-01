@@ -3,6 +3,7 @@ from application import app
 import json
 from users import get_users
 
+# Method that returns followers.
 @app.get("/api/followers")
 def api_get_followers():
     try:

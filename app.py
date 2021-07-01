@@ -1,3 +1,5 @@
+# Collaborated with Liz for this assignment.
+
 from application import app
 import sys
 

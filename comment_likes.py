@@ -3,6 +3,7 @@ from application import app
 import dbhelpers
 import json
 
+# Method that returns comment likes.
 @app.get("/api/comment-likes")
 def api_get_comment_likes():
     try:
@@ -34,6 +35,7 @@ def api_get_comment_likes():
     comments_likes_json = json.dumps(comments_likes, default=str)
     return Response(comments_likes_json, mimetype="application/json", status=200)
 
+# Method that posts a comment like.
 @app.post("/api/comment-likes")
 def api_post_comment_likes():
     try: 
@@ -68,6 +70,7 @@ def api_post_comment_likes():
     comments_likes_json = json.dumps(comments_likes_dictionary, default=str)
     return Response(comments_likes_json, mimetype="application/json", status=201)
 
+# Method that deletes a comment like.
 @app.delete("/api/comment-likes")
 def api_delete_comment_likes():
     try:

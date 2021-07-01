@@ -3,6 +3,7 @@ from application import app
 import dbhelpers
 import json
 
+# Method that returns tweet likes.
 @app.get("/api/tweet-likes")
 def api_get_tweet_likes():
     try:
@@ -34,6 +35,7 @@ def api_get_tweet_likes():
     tweets_likes_json = json.dumps(tweets_likes, default=str)
     return Response(tweets_likes_json, mimetype="application/json", status=200)
 
+# Method that posts tweet likes.
 @app.post("/api/tweet-likes")
 def api_post_tweet_likes():
     try: 
@@ -59,6 +61,7 @@ def api_post_tweet_likes():
         return Response("Could not like the tweet.", mimetype="plain/text", status=500)
     return Response("", mimetype="text/plain", status=201)
 
+# Method that deletes a tweet like.
 @app.delete("/api/tweet-likes")
 def api_delete_tweet_likes():
     try:

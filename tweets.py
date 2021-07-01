@@ -3,6 +3,7 @@ from application import app
 import dbhelpers
 import json
 
+# Method that returns tweets.
 @app.get("/api/tweets")
 def api_get_tweets():
     try:
@@ -21,6 +22,7 @@ def api_get_tweets():
     tweets_json = json.dumps(tweets, default=str)
     return Response(tweets_json, mimetype="application/json", status=200)
 
+# Method that lets a user post a tweet.
 @app.post("/api/tweets")
 def api_post_tweets():
     try: 
@@ -48,6 +50,7 @@ def api_post_tweets():
     tweets_json = json.dumps(tweets[0], default=str) 
     return Response(tweets_json, mimetype="application/json", status=201)
 
+# Method that allows the user to edit their tweet.
 @app.patch("/api/tweets")
 def api_patch_tweet():
     try:
@@ -73,6 +76,7 @@ def api_patch_tweet():
     tweet_json = json.dumps(tweet, default=str)
     return Response(tweet_json, mimetype="application/json", status=200)
 
+# Method that lets a user delete their tweet.
 @app.delete("/api/tweets")
 def api_delete_tweets():
     try:
@@ -89,6 +93,8 @@ def api_delete_tweets():
         return Response("Could not delete tweet", mimetype="text/plain", status=400)
     return Response("", mimetype="text/plain", status=204)
 
+# This function returns tweets.
+# Using a dictionary to get proper key values.
 def get_tweets(sql_statement, sql_params):
     users_properties = dbhelpers.run_select_statement(sql_statement, sql_params)
     
