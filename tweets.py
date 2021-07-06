@@ -104,7 +104,7 @@ def get_tweets(sql_statement, sql_params):
     for user_properties in users_properties:
         user = {
             "tweetId": user_properties[0],
-            "userID": user_properties[1],
+            "userId": user_properties[1],
             "username": user_properties[2],
             "content": user_properties[3],
             "createdAt": user_properties[4],

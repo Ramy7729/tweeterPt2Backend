@@ -20,7 +20,7 @@ def api_get_comments():
         return Response("Failed to GET comments.", mimetype="text/plain", status=500)
 
     if (len(comments_info) == 0):
-        comment = get_comments("SELECT id FROM tweet WHERE id=?", [tweet_id])
+        comment = dbhelpers.run_select_statement("SELECT id FROM tweet WHERE id=?", [tweet_id])
         if (len(comment) == 0):
             return Response("Tweet does not exist.", mimetype="text/plain", status=404)
 
