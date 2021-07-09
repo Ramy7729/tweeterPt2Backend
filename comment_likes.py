@@ -10,6 +10,8 @@ def api_get_comment_likes():
         comment_id = int(request.args.get("commentId", -1))
     except ValueError:
         return Response("commentID must be a number.", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     if (comment_id == -1):
         comments_likes_info = dbhelpers.run_select_statement("SELECT cl.comment_id, cl.user_id, u.username FROM comment_like cl INNER JOIN `user` u on u.id = cl.user_id", [])
@@ -45,6 +47,8 @@ def api_post_comment_likes():
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
     except ValueError:
         return Response("userId must be a number", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     comment_like_id = dbhelpers.run_insert_statement("INSERT INTO comment_like(user_id, comment_id) SELECT user_session.user_id, ? FROM user_session WHERE user_session.token =?", [comment_id, login_token])
 
@@ -80,6 +84,8 @@ def api_delete_comment_likes():
         return Response("tweetId must be a number", mimetype="text/plain", status=400)
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     number_of_comment_likes_deleted = dbhelpers.run_delete_statement("DELETE cl FROM comment_like cl INNER JOIN user_session us ON us.user_id = cl.user_id where cl.comment_id = ? AND us.token = ?", [comment_id, login_token])
     if (number_of_comment_likes_deleted != 1):

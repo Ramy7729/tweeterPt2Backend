@@ -19,8 +19,10 @@ def api_create_user():
         birthdate = request.json['birthdate']
         image_url = request.json.get('imageUrl', None)
         banner_url = request.json.get('bannerUrl', None)
-    except:
+    except KeyError:
         return Response("Please ensure all required fields are entered", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
 
     salt = create_salt()
     password = salt + password
@@ -66,6 +68,8 @@ def api_get_users():
         user_id = int(request.args.get("userId", -1))
     except ValueError:
         return Response("userID must be a number.", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     if (user_id == -1):
         users = get_users("SELECT id, email, username, bio, birthdate, image_url, banner_url FROM user", [])
@@ -85,11 +89,13 @@ def api_update_user():
         login_token = request.json['loginToken']
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
-
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
+    # Gets the user we are updating.
     users = get_users("SELECT u.id, u.email, u.username, u.bio, u.birthdate, u.image_url, u.banner_url FROM user u inner join user_session us on us.user_id = u.id WHERE us.token = ?", [login_token,])
     if (users == None or len(users) != 1):
         return Response("Could not find user.", mimetype="text/plain", status=404)
-
+    # Get the fields we are updating.
     optional_params = {
         "username": request.json.get('username'),
         "email": request.json.get('email'),
@@ -98,21 +104,22 @@ def api_update_user():
         "image_url": request.json.get('imageUrl'),
         "banner_url": request.json.get('bannerUrl'),
     }
-
+    # Conditional to check if email and username is not blank.
     if (optional_params['email'] == "" or optional_params['username'] == ""):
         return Response("Email and username can not be empty", mimetype="text/plain", status=400)
-
+    # Re-map image_url and banner_url because they are named differently in the database.
     users[0]['image_url'] = users[0]['imageUrl']
     users[0]['banner_url'] = users[0]['bannerUrl']
-
+    # Check to make sure the new parameters are different than the ones already present.
     new_optional_params = {}
     for key, value in optional_params.items():
         if (key == 'birthdate'):
+            # Convert birthdate to a string to compare.
             if (users[0][key].isoformat() != optional_params[key]):
                 new_optional_params[key] = value
         elif (users[0][key] != optional_params[key]):
             new_optional_params[key] = value
-
+    # If there are no updates do nothing.
     if (len(new_optional_params.keys()) == 0):
         del users[0]['image_url']
         del users[0]['banner_url']
@@ -120,6 +127,7 @@ def api_update_user():
         return Response(users_json, mimetype="application/json", status=200)
 
     try:
+        # Build some of the sql to update the values that need to be updated.
         sql_query_set_list = []
         set_params = []
         for param, value in new_optional_params.items():
@@ -129,11 +137,12 @@ def api_update_user():
 
         sql_query_set = ', '.join(sql_query_set_list)
         set_params.append(login_token)
-        
+        # Update the user.
         number_of_users_updated = dbhelpers.run_update_statement(
             f"UPDATE `user` u INNER JOIN `user_session` us ON us.user_id = u.id SET {sql_query_set} WHERE us.token = ?", set_params)
         if (number_of_users_updated != 1):
             return Response("Unauthorized.", mimetype="text/plain", status=403)
+        # Get the updated user to return it's new values.
         users = get_users("SELECT u.id, u.email, u.username, u.bio, u.birthdate, u.image_url, u.banner_url FROM user u inner join user_session us on us.user_id = u.id WHERE us.token = ?", [login_token,])
 
     except:
@@ -151,10 +160,10 @@ def api_delete_user():
     try:
         password = request.json['password']
         login_token = request.json['loginToken']
+    except KeyError:
+        return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
     except:
-        traceback.print_exc()
-        print("DO BETTER ERROR CATCHING")
-        return Response("Data Error", mimetype="text/plain", status=400)
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     user_rows = dbhelpers.run_delete_statement(
         "DELETE u, us from `user` u INNER JOIN user_session us ON us.user_id = u.id WHERE u.password=? AND us.token=?", [password, login_token])

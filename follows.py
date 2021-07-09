@@ -13,6 +13,8 @@ def api_get_follows():
         return Response("Please ensure a userId is sent", mimetype="text/plain", status=400)
     except ValueError:
         return Response("userID must be a number", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     users = get_users("SELECT follow_id, email, username, bio, birthdate, image_url, banner_url FROM user u INNER JOIN follow f ON f.follow_id = u.id WHERE f.user_id=?", [user_id])
     if (len(users) == 0):
@@ -34,6 +36,8 @@ def api_post_follows():
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
     except ValueError:
         return Response("userId must be a number", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     follow_user = dbhelpers.run_insert_statement("INSERT into follow(user_id, follow_id) SELECT user_session.user_id, ? FROM user_session WHERE user_session.token=?", [follow_id, login_token])
 
@@ -52,6 +56,8 @@ def api_delete_follows():
         follow_id = request.json['followId']
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     dbhelpers.run_delete_statement(
         "DELETE f from follow f INNER JOIN user_session us ON us.user_id = f.user_id where f.follow_id=? AND us.token=?", [follow_id, login_token])

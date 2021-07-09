@@ -10,6 +10,8 @@ def api_get_comments():
         tweet_id = int(request.args.get("tweetId", -1))
     except ValueError:
         return Response("tweetID must be a number.", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     if (tweet_id == -1):
         comments_info = get_comments("SELECT c.id, c.tweet_id, c.user_id, u.username, c.content, c.created_at FROM comment c inner join `user` u on u.id = c.user_id", [])
@@ -38,6 +40,8 @@ def api_post_comments():
         return Response("tweetId must be a number", mimetype="text/plain", status=400)
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     if (len(content) > 377):
         return Response("Content too long", mimetype="text/plain", status=400)
@@ -67,6 +71,8 @@ def api_patch_comment():
         return Response("commentId must be a number", mimetype="text/plain", status=400)
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     if (len(content) > 377):
         return Response("Content too long", mimetype="text/plain", status=400)
@@ -94,6 +100,8 @@ def api_delete_comments():
         return Response("tweetId must be a number", mimetype="text/plain", status=400)
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     number_of_comments_deleted = dbhelpers.run_delete_statement("DELETE c from comment c INNER JOIN user_session us ON us.user_id = c.user_id WHERE c.id=? AND us.token=?", [comment_id, login_token])
     if (number_of_comments_deleted != 1):

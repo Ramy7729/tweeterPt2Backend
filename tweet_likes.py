@@ -10,6 +10,8 @@ def api_get_tweet_likes():
         tweet_id = int(request.args.get("tweetId", -1))
     except ValueError:
         return Response("tweetID must be a number.", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     if (tweet_id == -1):
         tweets_likes_info = dbhelpers.run_select_statement("SELECT tl.tweet_id, tl.user_id, u.username from tweet_like tl INNER JOIN `user` u on u.id = tl.user_id", [])
@@ -45,6 +47,8 @@ def api_post_tweet_likes():
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
     except ValueError:
         return Response("userId must be a number", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     tweet_like_id = dbhelpers.run_insert_statement("insert into tweet_like(user_id, tweet_id) select user_session.user_id, ? from user_session where user_session.token=?", [tweet_id, login_token])
 
@@ -71,6 +75,8 @@ def api_delete_tweet_likes():
         return Response("tweetId must be a number", mimetype="text/plain", status=400)
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     number_of_tweet_likes_deleted = dbhelpers.run_delete_statement("DELETE tl FROM tweet_like tl INNER JOIN user_session us ON us.user_id = tl.user_id where tl.tweet_id = ? AND us.token = ?", [tweet_id, login_token])
     if (number_of_tweet_likes_deleted != 1):

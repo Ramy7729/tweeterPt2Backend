@@ -14,6 +14,8 @@ def api_post_login():
         password = request.json['password']
     except KeyError:
         return Response("Please enter both email and password", mimetype="plain/text", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     salt = get_salt_from_db(email)
     password = salt + password
@@ -46,12 +48,15 @@ def api_delete_login():
         login_token = request.json['loginToken']
     except KeyError:
         return Response("Please ensure all required fields are sent", mimetype="text/plain", status=400)
+    except:
+        return Response("Something went wrong please try again.", mimetype="text/plain", status=500)
     
     user_rows = dbhelpers.run_delete_statement(
         "DELETE us FROM user_session us WHERE us.token=?", [login_token])
+    # Checking to see the number of updated user rows.
     if(user_rows != 1):
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
-    return Response("User logged out", mimetype="text/plain", status=204)
+    return Response(status=204)
 
 # This function is to return salt based on the users email.
 def get_salt_from_db(email):
