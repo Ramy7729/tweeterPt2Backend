@@ -90,5 +90,5 @@ def api_delete_comment_likes():
     number_of_comment_likes_deleted = dbhelpers.run_delete_statement("DELETE cl FROM comment_like cl INNER JOIN user_session us ON us.user_id = cl.user_id where cl.comment_id = ? AND us.token = ?", [comment_id, login_token])
     if (number_of_comment_likes_deleted != 1):
         return Response("Could not delete comment like", mimetype="text/plain", status=400)
-    return Response("", mimetype="text/plain", status=204)
+    return Response(status=204)
     

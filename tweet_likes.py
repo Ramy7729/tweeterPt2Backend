@@ -81,4 +81,4 @@ def api_delete_tweet_likes():
     number_of_tweet_likes_deleted = dbhelpers.run_delete_statement("DELETE tl FROM tweet_like tl INNER JOIN user_session us ON us.user_id = tl.user_id where tl.tweet_id = ? AND us.token = ?", [tweet_id, login_token])
     if (number_of_tweet_likes_deleted != 1):
         return Response("Could not delete tweet like", mimetype="text/plain", status=400)
-    return Response("", mimetype="text/plain", status=204)
+    return Response(status=204)

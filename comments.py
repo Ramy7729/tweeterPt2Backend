@@ -106,7 +106,7 @@ def api_delete_comments():
     number_of_comments_deleted = dbhelpers.run_delete_statement("DELETE c from comment c INNER JOIN user_session us ON us.user_id = c.user_id WHERE c.id=? AND us.token=?", [comment_id, login_token])
     if (number_of_comments_deleted != 1):
         return Response("Could not delete comment", mimetype="text/plain", status=400)
-    return Response("", mimetype="text/plain", status=204)
+    return Response(status=204)
 
 # This function returns comments.
 # Using a dictionary to get proper key values.

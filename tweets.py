@@ -98,7 +98,7 @@ def api_delete_tweets():
         "DELETE t from tweet t INNER JOIN user_session us ON us.user_id = t.user_id where t.id=? AND us.token=?", [tweet_id, login_token])
     if (number_of_tweets_deleted != 1):
         return Response("Could not delete tweet", mimetype="text/plain", status=400)
-    return Response("", mimetype="text/plain", status=204)
+    return Response(status=204)
 
 # This function returns tweets.
 # Using a dictionary to get proper key values.

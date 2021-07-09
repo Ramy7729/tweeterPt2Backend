@@ -169,7 +169,7 @@ def api_delete_user():
         "DELETE u, us from `user` u INNER JOIN user_session us ON us.user_id = u.id WHERE u.password=? AND us.token=?", [password, login_token])
     if(user_rows < 2):
         return Response("DB Error, Sorry!", mimetype="text/plain", status=500)
-    return Response("", mimetype="text/plain", status=204)
+    return Response(status=204)
 
 # This function returns specified users with the sql select statement.
 # Uses a dictionary for proper key values.

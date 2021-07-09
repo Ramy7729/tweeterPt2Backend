@@ -46,7 +46,7 @@ def api_post_follows():
         if (len(users) == 0):
             return Response("User not found", mimetype="text/plain", status= 404)
         return Response("User already followed.", mimetype="plain/text", status=500)
-    return Response("", mimetype="text/plain", status=204)
+    return Response(status=204)
 
 # Method that deletes a follow.
 @app.delete("/api/follows")
@@ -62,4 +62,4 @@ def api_delete_follows():
     dbhelpers.run_delete_statement(
         "DELETE f from follow f INNER JOIN user_session us ON us.user_id = f.user_id where f.follow_id=? AND us.token=?", [follow_id, login_token])
     
-    return Response("", mimetype="text/plain", status=204)
+    return Response(status=204)
